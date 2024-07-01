@@ -1,0 +1,6 @@
+.vscode/launch.json
+best-models/**/*
+logs/**/*
+results/**/*
+src/**/__pycache__/
+src/**/*/__pycache__/

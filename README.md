@@ -29,8 +29,45 @@ To set up the environment, follow these steps:
 The repository is organized as follows:
 
 ```
+
+Here is the complete README file with the updated folder structure, including the additional files from adversarial_attacks:
+
+markdown
+Copy code
+# Fine-Tuning Scripts for Phi3 Models
+
+This repository contains all the necessary scripts for fine-tuning Phi3 models. The provided scripts are organized to facilitate the fine-tuning process, including data processing, training, evaluation, and inference.
+
+## Environment Setup
+
+To set up the environment, follow these steps:
+
+1. Create a new conda environment:
+
+    ```bash
+    conda create --name phi3_finetuning python=3.x
+    ```
+
+2. Activate the environment:
+
+    ```bash
+    conda activate phi3_finetuning
+    ```
+
+3. Install the required packages using pip:
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+## Folder Structure
+
+The repository is organized as follows:
+
 src/
 ├── adversarial_attacks/
+│ ├── Exemplo.py
+│ ├── GeradorAdversarial.py
 ├── model/
 ├── init.py
 ├── custom_trainer.py
@@ -50,6 +87,8 @@ Where:
 ## Scripts
 
 - **adversarial_attacks/**: Contains scripts for adversarial attacks related to the fine-tuning process.
+  - **Exemplo.py**: Example script for adversarial attacks.
+  - **GeradorAdversarial.py**: Script for generating adversarial examples.
 - **model/**: Contains model architecture and related scripts.
 - **__init__.py**: Initialization file for the src module.
 - **custom_trainer.py**: Custom training script for fine-tuning the model. (deprecated by now)

@@ -1,9 +1,15 @@
 
-from datetime import datetime
 import logging
 import transformers
-from finetuning_pipeline import finetuning_pipeline, save_evaluation_results_to_csv
+from data_processor import DataProcessor
 import os
+from datasets import load_dataset
+from transformers import AutoModelForSequenceClassification
+import torch
+from torch.utils.data import DataLoader
+import numpy as np
+from tqdm.auto import tqdm
+from metrics import compute_metrics
 os.environ['TORCH_USE_CUDA_DSA'] = '1'
 
 # Configure logging
@@ -15,11 +21,14 @@ logger = logging.getLogger(__name__)
 
 DATASET_NAME = "kamel-usp/aes_enem_dataset"
 DATASET_CONFIG = "PROPOR2024"
+TOKENIZER_NAME = "microsoft/Phi-3-medium-128k-instruct"
+CACHE_DIR = "/media/data/tmp/"
+PROBLEM_TYPE = "single_label_classification"
 MAX_SEQUENCE = 8192
 BATCH_SIZE = 2
-GRADIENT_ACC = 16
-MODEL_NAME = "microsoft/Phi-3-medium-128k-instruct"
-TOKENIZER_NAME = "microsoft/Phi-3-medium-128k-instruct"
+REFERENCE_CONCEPT = 0
+TRAINED_MODEL = f"best-models/phi3-lora-single_label_classification-C{REFERENCE_CONCEPT+1}"
+NUM_LABELS = 6
 SEED = 42
 transformers.set_seed(SEED)
 
@@ -27,21 +36,42 @@ transformers.set_seed(SEED)
 def main():
     logger.info("Starting the training process.")
 
-    trainer, tokenized_data = finetuning_pipeline(
-        dataset_name=DATASET_NAME,
-        dataset_config=DATASET_CONFIG,
-        reference_concept=REFERENCE_CONCEPT,
-        max_length=MAX_SEQUENCE,
-        batch_size=BATCH_SIZE,
-        gradient_acc=GRADIENT_ACC,
-        model_name=MODEL_NAME,
-        tokenizer_name=TOKENIZER_NAME,
-        logger=logger,
+    processor = DataProcessor(
+        DATASET_NAME, TOKENIZER_NAME, REFERENCE_CONCEPT, MAX_SEQUENCE
     )
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    datasets = load_dataset(DATASET_NAME, DATASET_CONFIG, cache_dir=CACHE_DIR)
+    tokenized_data = processor.preprocess_dataset(datasets)
+
     logger.info("Running on Test")
-    evaluate_test = trainer.evaluate(tokenized_data["test"])
-    logger.info("Fine Tuning Finished.")
+    model = AutoModelForSequenceClassification.from_pretrained(
+        TRAINED_MODEL,
+        num_labels=NUM_LABELS,
+        device_map="cuda", 
+        torch_dtype="auto", 
+        cache_dir=CACHE_DIR,
+        attn_implementation="flash_attention_2"
+    )
+    model.config.pad_token_id = model.config.eos_token_id
+    model.config.problem_type = PROBLEM_TYPE
+    model.eval()
+    logits_list = []
+    true_labels_list = []
+    with torch.no_grad():
+        tokenized_data.set_format('torch', columns=['input_ids', 'attention_mask', 'label'])
+        dataloader = DataLoader(tokenized_data["test"], batch_size=BATCH_SIZE)
+        for batch in tqdm(dataloader, total=len(dataloader), desc="Applying Inference in Batches"):
+            inputs = {k: v.to(model.device) for k, v in batch.items() if k != 'label'}
+            outputs = model(**inputs)
+            logits = outputs.logits.to(torch.float32).cpu().numpy()
+            true_labels = batch['label'].cpu().numpy()
+            logits_list.extend(logits)
+            true_labels_list.extend(true_labels)
+        logits_array = np.array(logits_list)
+        true_labels_array = np.array(true_labels_list)
+        results = compute_metrics((logits_array, true_labels_array), model)
+        print(results)
+
+    logger.info("Inference Finished.")
 
 
 if __name__ == "__main__":

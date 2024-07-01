@@ -23,8 +23,8 @@ from metrics import compute_metrics
 
 CACHE_DIR = "/media/data/tmp/"
 SEED_PARAM = 42
-NUM_LABELS = 1
-PROBLEM_TYPE = "regression" #single_label_classification or regression
+NUM_LABELS = 6
+PROBLEM_TYPE = "single_label_classification" #single_label_classification or regression
 
 
 def save_evaluation_results_to_csv(
@@ -114,7 +114,7 @@ def finetuning_pipeline(
     training_args = TrainingArguments(
         seed=SEED_PARAM,
         data_seed=SEED_PARAM,
-        output_dir="./results",  # Output directory for checkpoints and predictions
+        output_dir=f"./results/C{reference_concept+1}",  # Output directory for checkpoints and predictions
         overwrite_output_dir=True,  # Overwrite the content of the output directory
         per_device_train_batch_size=batch_size,  # Batch size for training
         per_device_eval_batch_size=batch_size,  # Batch size for evaluation
@@ -130,11 +130,11 @@ def finetuning_pipeline(
         logging_strategy="steps",
         logging_steps=100,
         save_strategy="epoch",
-        save_total_limit=2,  # Limit the total number of checkpoints
+        save_total_limit=1,  # Limit the total number of checkpoints
         eval_strategy="epoch",
         load_best_model_at_end=True,  # Load the best model at the end of training
         metric_for_best_model="QWK",
-        report_to=["tensorboard"],
+        report_to=["none"],
         bf16=True,
         half_precision_backend="cpu_amp"
     )

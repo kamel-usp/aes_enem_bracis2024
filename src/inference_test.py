@@ -27,14 +27,14 @@ PROBLEM_TYPE = "single_label_classification"
 MAX_SEQUENCE = 8192
 BATCH_SIZE = 2
 REFERENCE_CONCEPT = 0
-TRAINED_MODEL = f"best-models/phi3-lora-single_label_classification-C{REFERENCE_CONCEPT+1}"
+TRAINED_MODEL = f"kamel-usp/aes_enem_models-sourceA-classification-from-phi3-medium-128k-lora-C{REFERENCE_CONCEPT+1}"
 NUM_LABELS = 6
 SEED = 42
 transformers.set_seed(SEED)
 
 
 def main():
-    logger.info("Starting the training process.")
+    logger.info("Starting the inference process.")
 
     processor = DataProcessor(
         DATASET_NAME, TOKENIZER_NAME, REFERENCE_CONCEPT, MAX_SEQUENCE

@@ -1,5 +1,5 @@
-This repository contains the files created for the paper XXXXXX. 
-If you are using any of the models, please cite us using:
+This repository contains the files created for the paper Investigating Universal Adversarial Attacks Against Transformers-based Automatic Essay Scoring Systems. 
+If you are using any of the models or the attacks, please cite us using:
 
 REFERENCIA
 
